@@ -1,0 +1,27 @@
+{
+  "name": "wikiracer",
+  "version": "1.0.0",
+  "description": "A command line tool to wiki race.",
+  "main": "racer.js",
+  "scripts": {
+    "test": "node racer.js \"Toronto Raptors\" \"Jurassic Park\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wampleek2/WikiRacer.git"
+  },
+  "keywords": [
+    "wikipedia",
+    "racer"
+  ],
+  "author": "Kellan Wampler",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/wampleek2/WikiRacer/issues"
+  },
+  "homepage": "https://github.com/wampleek2/WikiRacer#readme",
+  "dependencies": {
+    "async": "^3.2.3",
+    "wtf_wikipedia": "^9.1.0"
+  }
+}
