@@ -11,6 +11,8 @@ WikiRacer.prototype.race = async function(startingArticle, targetArticle) {
     // console.log(targetArticle);
     this._start = startingArticle;
     this._target = targetArticle;
+    // this._targetList = [];
+    // await this.expandTarget();
     var root = new WikiNode(startingArticle);
     await root.fetchArticle();
     this._queue.push(root);
@@ -47,9 +49,14 @@ WikiRacer.prototype.raceHelper = async function(count) {
     var searchDepth = Math.min(adjacent.length, 20);
     for(let i = 0; i < searchDepth; i++) {
         var adjPage = adjacent[i];
+        var adjNode = new WikiNode(adjPage, node.getPath());
+        if(adjPage === this._target) {
+            console.log('Searched ' + count + ' articles.')
+            console.log(adjPage);
+            return adjNode.getPrintablePath();
+        }
         if(!this._visited[adjPage]) {
             this._visited[adjPage] = true;
-            adjNode = new WikiNode(adjPage, node.getPath());
             toLoad.push(adjNode)
             this._queue.push(adjNode);
         }
@@ -71,5 +78,28 @@ WikiRacer.prototype.fetchArticles = async function(articleList) {
     };
     await async.eachLimit(articleList, 10, applyFetchArticle);
 }
+
+// WikiRacer.prototype.expandTarget = async function() {
+//     var target = new WikiNode(this._target);
+//     await target.fetchArticle();
+//     var nearTarget = target.getAdjacentArticles().map((link) => {
+//         return new WikiNode(link);
+//     });
+//     await this.fetchArticles(nearTarget);
+//     console.log('Found ' + nearTarget.length + ' articles near target.');
+//     // for(let i = 0; i < 1; i++) {
+//     //     var links = nearTarget[i].getAdjacentArticles();
+//     //     console.log(nearTarget[i].getArticle())
+//     //     console.log(links);
+//     //     var testLinkBack = function(link) {
+//     //         return link === this._target;
+//     //     }
+//     //     if(links.some(testLinkBack)) {
+//     //         this._targetList.push(nearTarget.getArticle());
+//     //     }
+//     // }
+    
+//     console.log('Found ' + this._targetList.length + ' articles that link back.');
+// }
 
 module.exports = WikiRacer
