@@ -4,7 +4,7 @@
   "description": "A command line tool to wiki race.",
   "main": "racer.js",
   "scripts": {
-    "test": "node racer.js \"Toronto Raptors\" \"Jurassic Park\""
+    "test": "node racer.js \"Kevin Bacon\" \"Tom Cruise\""
   },
   "repository": {
     "type": "git",
