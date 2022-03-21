@@ -1,18 +1,17 @@
 const WikiNode = require('./WikiNode')
 const async = require('async')
 
-function WikiRacer() {
+function WikiRacer(startingArticle, targetArticle) {
+    this._start = startingArticle;
+    this._target = targetArticle;
     this._queue = [];
     this._visited = {};
+    this._articleCount = 0;
+    this._targetList = [];
 }
 
 WikiRacer.prototype.race = async function(startingArticle, targetArticle) {
-    // console.log(startingArticle);
-    // console.log(targetArticle);
-    this._start = startingArticle;
-    this._target = targetArticle;
-    // this._targetList = [];
-    // await this.expandTarget();
+    await this.expandTarget();
     var root = new WikiNode(startingArticle);
     await root.fetchArticle();
     this._queue.push(root);
@@ -20,7 +19,8 @@ WikiRacer.prototype.race = async function(startingArticle, targetArticle) {
 }
 
 WikiRacer.prototype.raceHelper = async function(count) {
-    if(this._queue.length == 0) {
+    var self = this;
+    if(self._queue.length == 0) {
         return false;
     }
 
@@ -28,18 +28,18 @@ WikiRacer.prototype.raceHelper = async function(count) {
         return false;
     }
 
-    var node = this._queue.shift();
+    var node = self._queue.shift();
     var page = node.getArticle();
 
     // console.log('Visiting node: ');
     // console.log(node);
 
-    if(page === this._target) {
+    if(page === self._target) {
         console.log('Searched ' + count + ' articles.')
         return node.getPrintablePath();
     }
 
-    this._visited[page] = true;
+    self._visited[page] = true;
     console.log('Visiting article ' + node.getPrintablePath());
 
     var adjacent = node.getAdjacentArticles();
@@ -50,15 +50,15 @@ WikiRacer.prototype.raceHelper = async function(count) {
     for(let i = 0; i < searchDepth; i++) {
         var adjPage = adjacent[i];
         var adjNode = new WikiNode(adjPage, node.getPath());
-        if(adjPage === this._target) {
-            console.log('Searched ' + count + ' articles.')
-            console.log(adjPage);
-            return adjNode.getPrintablePath();
+        var toDest = self.findPath(adjPage);
+        if(toDest) {
+            console.log("Searched " + this._articleCount + " articles to find a path.");
+            return node.getPath().concat(toDest);
         }
-        if(!this._visited[adjPage]) {
-            this._visited[adjPage] = true;
+        if(!self._visited[adjPage]) {
+            self._visited[adjPage] = true;
             toLoad.push(adjNode)
-            this._queue.push(adjNode);
+            self._queue.push(adjNode);
         }
     }
 
@@ -71,35 +71,50 @@ WikiRacer.prototype.raceHelper = async function(count) {
 }
 
 WikiRacer.prototype.fetchArticles = async function(articleList) {
+    var self = this;
     // console.log("Fetching articles");
     // console.log(articleList.length);
     var applyFetchArticle = async function(article) {
+        self._articleCount++;
         await article.fetchArticle();
     };
-    await async.eachLimit(articleList, 10, applyFetchArticle);
+
+    await async.eachLimit(articleList, 20, applyFetchArticle);
+
 }
 
-// WikiRacer.prototype.expandTarget = async function() {
-//     var target = new WikiNode(this._target);
-//     await target.fetchArticle();
-//     var nearTarget = target.getAdjacentArticles().map((link) => {
-//         return new WikiNode(link);
-//     });
-//     await this.fetchArticles(nearTarget);
-//     console.log('Found ' + nearTarget.length + ' articles near target.');
-//     // for(let i = 0; i < 1; i++) {
-//     //     var links = nearTarget[i].getAdjacentArticles();
-//     //     console.log(nearTarget[i].getArticle())
-//     //     console.log(links);
-//     //     var testLinkBack = function(link) {
-//     //         return link === this._target;
-//     //     }
-//     //     if(links.some(testLinkBack)) {
-//     //         this._targetList.push(nearTarget.getArticle());
-//     //     }
-//     // }
+WikiRacer.prototype.expandTarget = async function() {
+    var self = this;
+    var target = new WikiNode(self._target);
+    await target.fetchArticle();
+    var nearTarget = target.getAdjacentArticles().map((link) => {
+        return new WikiNode(link);
+    });
+    await self.fetchArticles(nearTarget);
+    for(let i = 0; i < nearTarget.length; i++) {
+        var adjNode = nearTarget[i];
+        var links = adjNode.getAdjacentArticles();
+        var testLinkBack = function(link) {
+            return link == self._target;
+        }
+        if(links.some(testLinkBack)) {
+            this._targetList.push(adjNode.getArticle());
+        }
+    }
+
+    console.log("Found " + self._targetList.length + " targets.");
     
-//     console.log('Found ' + this._targetList.length + ' articles that link back.');
-// }
+}
+
+WikiRacer.prototype.findPath = function(article) {
+    var self = this;
+    if(article == self._target) {
+        return [article];
+    } else if(self._targetList.includes(article)) {
+        return [article, self._target];
+    } else {
+        return;
+    }
+}
 
 module.exports = WikiRacer

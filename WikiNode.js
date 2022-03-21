@@ -30,7 +30,9 @@ WikiNode.prototype.getPrintablePath = function() {
 }
 
 WikiNode.prototype.fetchArticle = async function() {
-    this._wtf = await WTF.fetch(this._article);
+    if(this._article) {
+        this._wtf = await WTF.fetch(this._article);
+    }
 }
 
 WikiNode.prototype.getAdjacentArticles = function() {
